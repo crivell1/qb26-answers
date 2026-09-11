@@ -415,8 +415,7 @@ cor.test(dt$Liver,dt$`Brain - Cortex`, method= "spearman")
 
 # interpretation
 
-# The liver is more correlated in gene expression to the brain than it is to the heart. It does to me. The heart is mainly cardiac muscle tissue which is more different in my opinion than neuronal tissue as opposed to adipose like tissue and immune cells. the brain and the liver are metabolically heavy organs.
-
+# The liver is more correlated in gene expression to the heart than it is to the brain (if we are using the rho as the comparison value). The brain is an extremely specialized organ with incredibly specialized gene expression, visceral organs being more similar to each other than being similar to the central nervous system
 ```
 
 ------------------------------------------------------------------------
