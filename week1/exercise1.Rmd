@@ -1,0 +1,31 @@
+---
+title: "exercise1"
+output: html_document
+date: "2026-09-18"
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+```
+
+## Ingest data
+
+```{r cars}
+header <- c( "chr", "start", "end", "count" )
+df_kc <- read_tsv("~/qb26-answers/week1/hg19-kc-count.bed", col_names=header )
+
+ggplot(df_kc, aes(x=start,stop, y=count)) +
+  geom_line() +
+  facet_wrap(chr~.,ncol=5, scales = "free_x") +
+  ggsave("~/qb26-answers/week1/exercise_1.png")
+
+```
+
+## Plot
+
+```{r}
+ggplot(df_kc, aes(x=start,stop, y=count)) +
+  geom_line() +
+  facet_wrap(chr~.,ncol=5, scales = "free_x") +
+  ggsave("~/qb26-answers/week1/exercise_1.png")
+```
