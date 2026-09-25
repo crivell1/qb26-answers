@@ -31,3 +31,9 @@ This was not a paired end sequencing allingment - it seems it was single read se
 # Question 2.6: Looking at your 10 samples in this region, which ones appear to carry BY ancestry and which appear to carry RM ancestry? Find the markers at chrI:27915, chrI:28323, chrI:28652, and chrI:29667 in ~/Data/BYxRM/BYxRM_GenoData.txt and check whether your visual call agrees with the published genotypes.
 BY ancestry - 09, 24, 31, 39, 62, 63
 RM ancestry - 11, 23, 27, 35, 
+
+# Question 3.1: Open the VCF with less -S and look at the header lines beginning with ##. Then find the #CHROM line. What are the last 10 columns, and where did those names come from?
+The last 10 columns are the samples that we are aligning. They came from the list in the text file we made.
+
+# Question 3.2: Why does the ploidy argument matter here? What would a genotype look like if you had told FreeBayes these samples were diploid?
+the segregates are a haploid sample, which map only one allele for the read. If it was going for diploid read then it might give a heterozygous count which wouldn't make sense for our model. GT would look like 0/1 or 0/0 or 1/1 if it was diploid.
