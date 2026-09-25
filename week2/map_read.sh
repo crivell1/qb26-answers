@@ -1,4 +1,4 @@
-!#/bin/bash 
+#!/bin/bash 
 
 cd genomes
 cp ~/Data/References/sacCer3/sacCer3.fa.gz .
