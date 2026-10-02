@@ -1,14 +1,14 @@
 !#/bin/bash/
 
-bedtools intersect -wo -a nhlf-active.bed -b nhlf-repressed.bed | wc -c
+bedtools intersect -wo -a nhlf-active.bed -b nhlf-repressed.bed | wc -l
        #0
-bedtools intersect -wo -a nhek-active.bed -b nhek-repressed.bed | wc -c
+bedtools intersect -wo -a nhek-active.bed -b nhek-repressed.bed | wc -l
        #0
-bedtools intersect -u -a nhek-active.bed -b nhlf-active.bed | wc -c 
- #745322    # had to switch it from -wa -> -u to make it add up correclty
+bedtools intersect -a nhek-active.bed -b nhlf-active.bed | wc -l 
+ #12174    # had to switch it from -wa -> -u to make it add up correclty
 
-bedtools intersect -v -a nhek-active.bed -b nhlf-active.bed | wc -c
-  #154383
+bedtools intersect -v -a nhek-active.bed -b nhlf-active.bed | wc -l
+  #2405
 
 bedtools intersect -f 1 -a nhek-active.bed -b nhlf-active.bed | head -5
 #chr1	25558413	25559413	1_Active_Promoter	0	.	25558413	25559413
