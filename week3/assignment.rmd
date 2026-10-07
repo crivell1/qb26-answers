@@ -1,0 +1,481 @@
+# Linear Regression
+
+**Deadline:** Friday, October 9\
+**Resubmission deadline:** Friday, October 30
+
+## Assignment Overview
+
+The goal of today's lab is to use linear regression and related statistical methods to investigate the relationship between paternal age, maternal age, and the number of de novo mutations (DNMs) in a proband (offspring). Today's assignment will build familiarity with manipulating tabular datasets containing mixed data types using the **tidyverse** in **R**. Specifically, you will import a table of de novo mutations and manipulate it to calculate the number of maternal and paternal DNMs per individual. You will then fit and interpret simple and multiple linear regression models with **stats::lm**, compare nested models with **stats::anova**, and tidy results with **broom**.
+
+This assignment is an R Markdown notebook. Write your code in the empty code chunks and your answers where you see *Your answer:*.
+
+## Data
+
+Data are taken from [Halldorsson, B. V. et al. (2019). Characterizing mutagenic effects of recombination through a sequence-level genetic map. *Science*, 363(6425)](https://science.sciencemag.org/content/363/6425/eaau1043.abstract).
+
+Read the abstract from the above paper to understand the context of the datasets you will be using. The data you need for this assignment are available from Dropbox at:
+
+1.  Information about the number and parental origin of each de novo mutation detected in a proband (offspring): [aau1043_dnm.csv](https://www.dropbox.com/scl/fi/6e28a3dow872fi02cp537/aau1043_dnm.csv?rlkey=l3gs7fb6igff4el5ov6wg96ai&dl=0)
+2.  Ages of the parents of each proband: [aau1043_parental_age.csv](https://www.dropbox.com/scl/fi/sjrq1x1g30h0j10ktxysi/aau1043_parental_age.csv?rlkey=e9g3m9iq4tfsm9ski7w4vb0bf&dl=0)
+
+You may copy these into your submission directory (and add to your `.gitignore`).
+
+Before beginning the assignment, take a quick look at both files (e.g., with `less -S` in Unix) to confirm their structure.
+
+------------------------------------------------------------------------
+
+## Getting started (R packages)
+
+Load the tidyverse and broom packages.
+
+```{r}
+library(broom)
+library(tidyverse)
+```
+
+------------------------------------------------------------------------
+
+## Exercises
+
+### Exercise 1: Wrangle the data
+
+#### **Step 1.1 — Load DNMs**
+
+Load `aau1043_dnm.csv` into a tibble.
+
+```{r}
+
+dnm <- read_csv("~/qb26-answers/week3/aau1043_dnm.csv")
+
+```
+
+#### **Step 1.2 — Count DNMs by parental origin per proband**
+
+Create a **per-proband** summary with counts of maternally and paternally inherited DNMs. Ignore DNMs without a specified parent of origin. Name the count columns `maternal_dnm` and `paternal_dnm`, as later steps use these names.
+
+```{r}
+(unique(dnm$Proband_id))
+
+per_proband <- dnm |> 
+  drop_na(Phase_combined) |> 
+  group_by(Proband_id) |> 
+  count(Phase_combined) |> 
+  pivot_wider(
+    names_from = Phase_combined,
+    values_from = n
+  ) |> 
+  rename("maternal_dnm" = "mother", "paternal_dnm" = "father")
+
+
+```
+
+#### **Step 1.3 — Load parental ages**
+
+Load `aau1043_parental_age.csv`.
+
+```{r}
+ages<- read_csv("~/qb26-answers/week3/aau1043_parental_age.csv")
+```
+
+#### **Step 1.4 — Merge counts with ages**
+
+Join the two tibbles by proband ID. Name the result `merged`, as later steps use this name.
+
+```{r}
+merged <- merge.data.frame(per_proband, ages, by = "Proband_id")
+```
+
+------------------------------------------------------------------------
+
+### Exercise 2: Fit and interpret linear regression models with R
+
+Use your merged data frame for the following. All plots should be clearly labeled and easily interpretable.
+
+#### **Step 2.1 — Visualize relationships**
+
+**2.1.1** Create a scatter plot of the count of maternal DNMs vs. maternal age → save as `ex2_a.png`
+
+```{r}
+ex2_a <- ggplot(merged,  aes(Mother_age, maternal_dnm)) +
+  geom_point() +
+  labs(title ="Count of maternal DNMs vs Maternal age") +
+  xlab("Maternal Age (years)") +
+  ylab("Maternal DNM count")
+  
+
+ex2_a
+ggsave("~/qb26-answers/week3/ex2_a.png", width=5,height=5)
+
+```
+
+**2.1.2** Create a scatter plot of the count of paternal DNMs vs. paternal age → save as `ex2_b.png`
+
+```{r}
+ex2_b <- ggplot(merged,  aes(Father_age, paternal_dnm)) +
+  geom_point() +
+  labs(title ="Count of paternal DNMs vs Paternal age") +
+  xlab("Paternal Age (years)") +
+  ylab("Paternal DNM count")
+  
+
+ex2_b
+ggsave("~/qb26-answers/week3/ex2_b.png", width=5,height=5)
+```
+
+**2.1.3** Create a scatter plot of paternal age vs. maternal age → save as `ex2_c.png`
+
+```{r}
+ex2_c <- ggplot(merged, aes(Father_age, Mother_age)) +
+  geom_point()+
+  labs(title = "Paternal and Maternal age") +
+  xlab("Paternal age (years)") +
+  ylab("Maternal age (years)")
+
+ex2_c
+ggsave("~/qb26-answers/week3/ex2_c.png", width=5,height=5)
+
+```
+
+#### **Step 2.2 — OLS: maternal age vs. maternal DNMs**
+
+Fit a simple linear regression model relating maternal age to the number of maternal de novo mutations.
+
+```{r}
+
+lm_2.2 <- merged |> 
+  lm(formula = maternal_dnm ~ Mother_age)
+
+summary(lm_2.2)
+
+
+```
+
+Answer the following questions:
+
+1.  What is the "size" (i.e., slope) of this relationship? Interpret the slope in plain language. Does it match your plot?
+
+    *Your answer: 
+      slope of 0.37757
+      As the mother's age increases 1, the number of maternal DNMs increases by 0.37.
+      Yes
+      *
+
+2.  Is the relationship significant? How do you know? Explain the p-value in plain but precise language.
+
+    *Your answer:
+      Yes
+      The p-value is extremely miniscule
+      The probability of obtaining a test-score value that is "extreme" if there was no interaction between the conditions - extreme being a t-statistic that is greater than or equal to the t-statistic of the null hypothesis 
+      *
+
+#### **Step 2.3 — OLS: paternal age vs. paternal DNMs**
+
+Repeat the step above but for paternal age vs. paternal DNMs.
+
+```{r}
+
+lm_2.3 <- merged |> 
+  lm(formula = paternal_dnm ~ Father_age)
+
+summary(lm_2.3)
+
+```
+
+Answer the following questions:
+
+1.  What is the "size" (i.e., slope) of this relationship? Interpret the slope in plain language. Does it match your plot?
+
+    *Your answer:
+    slope of 1.35384
+    As the father's age increases 1, the number of paternal DNMs increases by 1.35384.
+    Yes
+    *
+
+2.  Is the relationship significant? How do you know? Explain the p-value in plain but precise language.
+
+    *Your answer:
+      Yes
+      The p-value is extremely miniscule
+      The probability of obtaining a test-score value that is "extreme" if there was no interaction between the conditions - extreme being a t-statistic that is greater than or equal to the t-statistic of the null hypothesis*
+
+#### **Step 2.4 — Predict for a 50.5-year-old father**
+
+Use the paternal regression model to predict the expected number of paternal DNMs for a father of age 50.5. You are welcome to do this manually or using a built-in function, but show your work in the code chunk.
+
+```{r}
+
+pred_data <- tibble(Father_age = 50.5)
+predict(lm_2.3, pred_data)
+
+## or use the equation to verify
+
+# y = 10.32632 + 1.35384x
+10.32632+1.35384*50.5
+
+
+```
+
+*Your answer: 78.69546 DNMs*
+
+#### **Step 2.5 — Multiple regression: correlated predictors**
+
+Maternal DNMs arose in the mother's germline, so there is no obvious reason that the father's age should affect them.
+
+**2.5.1** Fit a simple linear regression model relating **paternal** age to the number of **maternal** DNMs.
+
+```{r}
+ggplot(merged, aes(Father_age, maternal_dnm))+
+  geom_point()
+
+lm_2.5.1 <- merged |> 
+  lm(formula = Father_age ~ maternal_dnm)
+
+summary(lm_2.5.1)
+
+```
+
+1.  Is paternal age a significant predictor of maternal DNMs on its own? Using your plot from 2.1.3, explain why this might happen.
+
+    *Your answer: It seems to be but is confounded by maternal age. Paternal age and maternal age seem to be positively correlated - so when that's not controlled for it will cause significance*
+
+**2.5.2** Fit a multiple linear regression model with both maternal age and paternal age as predictors of maternal DNMs, just as we added year as a covariate in the penguin example.
+
+```{r}
+
+lm_2.5.2 <- merged |> 
+  lm(formula = maternal_dnm ~ Mother_age + Father_age)
+
+summary(lm_2.5.2)
+
+```
+
+2.  What happened to the paternal age coefficient and its p-value?
+
+    *Your answer: The coefficient became negative and close to 0 - the p-value increased to 0.18773*
+
+3.  Interpret the maternal age coefficient in plain language. How does its meaning differ from the slope you estimated in Step 2.2? (Hint: what is being held constant?)
+
+    *Your answer: When the paternal age is controlled for and kept constant, the number of maternal DNMs increase by 0.44498 when the maternal age increases by 1.*
+
+**2.5.3** Use `anova()` to compare your two-predictor model from 2.5.2 to your model from Step 2.2 (maternal age only).
+
+> **Hint:** In the live coding, we used `anova()` to test whether island improved a model that already contained sex and year. The same approach works for any pair of models where the smaller model is the larger model with some terms removed (these are called "nested" models). Here, the smaller model is the one that leaves out paternal age.
+
+```{r}
+
+anova(lm_2.5.2, lm_2.2)
+
+summary(lm_2.5.2)
+
+```
+
+4.  Does adding paternal age improve the model? Compare the p-value from `anova()` to the p-value for paternal age in the `summary()` of the two-predictor model. Why are they the same here, when for island we needed `anova()` to get a single answer? (Hint: how many coefficients did island add to the model, and how many does paternal age add?)
+
+    *Your answer:
+      No
+      Only one coefficient was added with the parental age group so only one value had to be calculated- the island group separated out multiple groups due to having a third category which the model had to account for*
+
+#### **Step 2.6 — Compare distributions of maternal vs. paternal DNMs**
+
+Plot both distributions on the **same axes** as semi-transparent histograms; save as `ex2_d.png`.
+
+```{r}
+
+ex2_d <- dnm |> 
+  drop_na(Phase_combined) |> 
+  ggplot(aes(x=Proband_id, fill = Phase_combined)) +
+  geom_histogram(alpha = 0.5)
+
+    
+ex2_d
+ggsave("~/qb26-answers/week3/ex2_d.png", width=5,height=5)
+
+
+```
+
+#### **Step 2.7 — Statistical test: maternal vs. paternal DNMs per proband**
+
+We have **paired** observations per proband (maternal vs. paternal). The paired t-test assumes that the within-pair differences are approximately normally distributed.
+
+**2.7.1** Apply a paired t-test in R using `t.test(merged$maternal_dnm, merged$paternal_dnm, paired = TRUE)`.
+
+```{r}
+
+p_test <- t.test(merged$maternal_dnm, merged$paternal_dnm, paired = TRUE)
+print(p_test)
+
+```
+
+1.  What is the "size" of this relationship (i.e., the average difference in counts of maternal and paternal DNMs)? Interpret the difference in plain language. Does it match your plot?
+
+    *Your answer: a difference of 39.2 between the means. This means that the parental_dnms contribute ~40 mutations more than the maternal lineage on average. Yes this does*
+
+2.  Is the relationship significant? How do you know? Explain the p-value in plain but precise language.
+
+    *Your answer: 
+      Yes
+      The p-value is miniscule
+      The means differ significantly - the proportion of getting a result similar what we got with means that didn't differ significantly is near 0 (2.2e-16)*
+
+**2.7.2** The paired t-test is equivalent to using the difference between the maternal and paternal DNM counts per proband as the response variable and fitting a model with only an intercept term (indicated with `1` on the right side of the model formula). Fit this model using `lm()`.
+
+```{r}
+
+lm_2.7.2 <- merged |> 
+  lm(formula = (maternal_dnm - paternal_dnm) ~ 1)
+
+summary(lm_2.7.2)
+
+```
+
+3.  How do the results compare to the paired t-test? How would you interpret the coefficient estimate for the intercept term?
+
+    *Your answer: 
+    The intercept is the same as the mean difference - both tests have significance values of 2e-16
+    I would interpret it as the difference between the means of the two groups - since that is what the linear model tests
+    *
+
+------------------------------------------------------------------------
+
+### Exercise 3: Explore a new dataset
+
+#### **Step 3.1 — Pick a TidyTuesday dataset**
+
+Choose a dataset from the bottom of the [TidyTuesday README](https://github.com/rfordatascience/tidytuesday) and load it.
+
+```{r}
+
+country_music <- read_csv("~/qb26-answers/week3/country_music.csv")
+
+```
+
+1.  Which dataset did you choose?
+
+    *Your answer: The Country Music dataset*
+
+#### **Step 3.2 — Explore and visualize**
+
+Generate figures; save them as `ex3_<something>.png`.
+
+```{r}
+library(stringr)
+
+country_music <- country_music |> 
+  mutate(
+    truck_count = str_count(Lyrics, regex("truck", ignore_case = TRUE)),
+    god_count = str_count(Lyrics, regex("god", ignore_case = TRUE)),
+    beer_count = str_count(Lyrics, regex("beer", ignore_case = TRUE)),
+    whiksey_count = str_count(Lyrics, regex("whiskey", ignore_case = TRUE)),
+    word_count = str_count(Lyrics, "\\w+"),
+    writer_count = str_count(Writers, ",") + 1
+  )
+  
+p1 <- country_music |> 
+  ggplot(aes(x=Writers,y=beer_count,fill=writer_count)) +
+  geom_point()
+p1
+
+p2 <- country_music |> 
+  ggplot(aes(x=truck_count)) +
+  geom_histogram()
+p2
+  
+p3 <- country_music |> 
+  ggplot(aes(x=`Entered Top 30 In:`, y=god_count, fill = Artist))+
+  geom_jitter()
+p3
+
+p4 <- country_music |> 
+  ggplot(aes(y=word_count,x=`Entered Top 30 In:`)) +
+  geom_point()
+p4
+#Could be interesting
+
+p5 <- country_music |> 
+  ggplot(aes(x=writer_count,y=word_count,fill=god_count))+
+  geom_jitter()
+p5
+#maybe interesting?
+
+ggsave("~/qb26-answers/week3/ex3_wc_vs_year.png", p4, width=5,height=5)
+ggsave("~/qb26-answers/week3/ex3_writer-count_vs_word-count_with_g-count.png", p5, width=5,height=5)
+
+
+```
+
+1.  What interesting patterns do you notice?
+
+    *Your answer:
+    Not much with the variables that i chose honestly. Maybe a connection with word count and year that I will explore!*
+
+#### **Step 3.3 — Pose and test a linear-model hypothesis**
+
+1.  State a hypothesis that you can test with a linear model.
+
+    *Your answer: I expect that as the year increases, the word count in the songs will increase*
+
+Fit a linear model with at least two predictors to test your hypothesis, and evaluate its fit.
+
+```{r}
+
+lm_3.3.1 <- country_music |> 
+  lm(formula = word_count ~ `Entered Top 30 In:`)
+
+summary(lm_3.3.1)
+
+lm_3.3.2 <- country_music |> 
+  lm(formula = word_count ~ `Entered Top 30 In:` + writer_count)
+
+summary(lm_3.3.2)
+
+anova(lm_3.3.2, lm_3.3.1)
+
+summary(lm(formula = country_music$word_count ~ country_music$writer_count))
+summary(lm(formula = country_music$`Entered Top 30 In:` ~ country_music$writer_count))
+
+```
+
+2.  Why did you include each predictor?
+
+    *Your answer: I had thought that potentially adding more writers would cause changes to the word count - and I don't know if there was a relationship with the number of writers with the charting year, or if certain years were more verbose than others*
+
+3.  Report and interpret your results. How well does the model fit?
+
+    *Your answer: There does seem to be a positive relationship betwen the writer count and the word count - but the year the song charted did not seem to have an effect (no relationship could be modeled between the means)
+    The model seems to fit alright, but looking at the scatterplot - there's a ton of noise so I'm not totally convinced - especially with only 7 years of data in the dataset.*
+
+------------------------------------------------------------------------
+
+## Submission
+
+- Your completed R Markdown notebook (`.Rmd`), with code in each chunk and your answers to all questions.
+- The figures you saved (`ex2_a.png` through `ex2_d.png`, and your `ex3_` figures).
+
+## Grading Rubric (Total = 10 points)
+
+### **Exercise 1 — Wrangle the Data (2 points)**
+
+- Load and inspect DNM data (**0.5 pt**)
+- Create per-proband maternal and paternal DNM counts (**0.5 pt**)
+- Load and inspect parental age data (**0.5 pt**)
+- Join counts with ages into a merged table (**0.5 pt**)
+
+### **Exercise 2 — Fit and Interpret Linear Models (6 points)**
+
+- Step 2.1: Scatter plots for DNMs vs. parental age and paternal vs. maternal age (**1 pt**)
+- Step 2.2: Fit and interpret maternal OLS model (**1 pt**)
+- Step 2.3: Fit and interpret paternal OLS model (**0.5 pt**)
+- Step 2.4: Predict paternal DNMs for age 50.5 (**0.5 pt**)
+- Step 2.5: Multiple regression with both parental ages, and nested model comparison with `anova()` (**1.5 pts**)
+- Step 2.6: Plot distributions of maternal vs. paternal DNMs (**0.5 pt**)
+- Step 2.7: Paired t-test (`t.test` and `lm(diff ~ 1)`) and interpret results (**1 pt**)
+
+### **Exercise 3 — Explore a New Dataset (2 points)**
+
+- Step 3.1: Choose and document TidyTuesday dataset (**0.5 pt**)
+- Step 3.2: Produce exploratory figure(s) (**0.5 pt**)
+- Step 3.3: Pose and test a multiple linear regression hypothesis and interpret results (**1 pt**)
+
+**Total Points: 10**
+
+------------------------------------------------------------------------
