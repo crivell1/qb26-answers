@@ -281,10 +281,12 @@ Plot both distributions on the **same axes** as semi-transparent histograms; sav
 
 ```{r}
 
-ex2_d <- dnm |> 
-  drop_na(Phase_combined) |> 
-  ggplot(aes(x=Proband_id, fill = Phase_combined)) +
-  geom_histogram(alpha = 0.5)
+ex2_d <- per_proband |> 
+  pivot_longer(c(paternal_dnm, maternal_dnm),names_to = "sex", values_to = "dnm") |> 
+  ggplot() + 
+  geom_histogram(aes(x=dnm, fill = sex), alpha = 0.5) +
+  xlab("DNM count") +
+  ylab("# of people")
 
     
 ex2_d
