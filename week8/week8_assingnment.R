@@ -47,7 +47,9 @@ colData(kidney)
 ## to me the interesting ones aer cell_type, disease, sizeFactor. This would allow us to explore which cell types have what expression, the disease state that could contribute to altered expression, and how that cell's expression varies across the other cells sampled
 
 # Plot cells according to X_umap using plotReducedDim() and colouring by cell_type
-plotReducedDim(kidney, "X_umap", color_by = "cell_type")
+
+plotReducedDim(kidney, "X_umap", color_by = "cell_type") +
+  ggsave("~/qb26-answers/week8/UMAP_for_week8.png", width = 16, height = 6)
 
 ### Exercise 2: explore gene level statistics
 
@@ -173,3 +175,8 @@ dotplot( hen_ego )
 ## top terms: gen of precurosoe metabolites, energy derivation by oxidation of organic compounds, cellular respiration, aerobic respiration 
 ## These cells need constant ATP and energy to pump Na and K into/out of cell - since their job is salt control
 
+# Missing UMAP by cell type?
+
+plotReducedDim( kidney, "UMAP", colour_by="label" )
+
+        
