@@ -109,9 +109,12 @@ vsd <- vst(dds)
 Now apply the `plotPCA()` function to your VST-normalized data. Perform this step three separate times, each time providing a different value to the `intgroup =` argument to color the points by various variables in your metadata. Save your plots as `ex1_a.png`, `ex1_b.png`, and `ex1_c.png`.
 
 ```{r}
-plotPCA(vsd, intgroup = "SEX")
-plotPCA(vsd, intgroup = "AGE")
-plotPCA(vsd, intgroup = "DTHHRDY")
+plotPCA(vsd, intgroup = "SEX") + 
+  ggsave("~/qb26-answers/week7/ex1_a.png")
+plotPCA(vsd, intgroup = "AGE") + 
+  ggsave("~/qb26-answers/week7/ex1_b.png")
+plotPCA(vsd, intgroup = "DTHHRDY") +
+  ggsave("~/qb26-answers/week7/ex1_c.png")
 
 ```
 
